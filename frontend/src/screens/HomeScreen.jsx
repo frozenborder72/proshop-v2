@@ -2,6 +2,7 @@ import { useGetProductsQuery } from '../slices/productsApiSlice'
 import { Row, Col } from 'react-bootstrap'
 import Product from '../components/Product'
 import Loader from '../components/Loader'
+import Message from '../components/Message'
 
 const HomeScreen = () => {
   const { data: products, isLoading, error } = useGetProductsQuery()
