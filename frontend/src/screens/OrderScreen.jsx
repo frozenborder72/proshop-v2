@@ -25,8 +25,8 @@ const OrderScreen = () => {
 
   const [payOrder, { isLoading: loadingPay }] = usePayOrderMutation()
 
-  // const [deliverOrder, { isLoading: loadingDeliver }] =
-  //   useDeliverOrderMutation()
+  const [deliverOrder, { isLoading: loadingDeliver }] =
+    useDeliverOrderMutation()
 
   const { userInfo } = useSelector(state => state.auth)
 
@@ -96,10 +96,10 @@ const OrderScreen = () => {
       })
   }
 
-  // const deliverHandler = async () => {
-  //   await deliverOrder(orderId)
-  //   refetch()
-  // }
+  const deliverHandler = async () => {
+    await deliverOrder(orderId)
+    refetch()
+  }
 
   return isLoading ? (
     <Loader />
@@ -237,7 +237,7 @@ const OrderScreen = () => {
                 </ListGroup.Item>
               )}
 
-              {/* {loadingDeliver && <Loader />}
+              {loadingDeliver && <Loader />}
 
               {userInfo &&
                 userInfo.isAdmin &&
@@ -251,7 +251,7 @@ const OrderScreen = () => {
                       Mark As Delivered
                     </Button>
                   </ListGroup.Item>
-                )} */}
+                )}
             </ListGroup>
           </Card>
         </Col>

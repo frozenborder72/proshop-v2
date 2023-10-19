@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { useGetProductDetailQuery } from '../slices/productsApiSlice'
+import { useGetProductDetailsQuery } from '../slices/productsApiSlice'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { Form, Row, Col, Image, ListGroup, Card, Button } from 'react-bootstrap'
@@ -20,7 +20,7 @@ const ProductScreen = () => {
     data: product,
     isLoading,
     error,
-  } = useGetProductDetailQuery(productId)
+  } = useGetProductDetailsQuery(productId)
 
   const addToCartHandler = () => {
     dispatch(addToCart({ ...product, qty }))
