@@ -5,21 +5,41 @@ import Product from '../models/productModel.js'
 // @route   GET /api/products
 // @access  Public
 const getProducts = asyncHandler(async (req, res) => {
-  const products = await Product.find({})
-  res.json(products)
+  const pageSize = process.env.PAGINATION_LIMIT
+  const page = Number(req.query.pageNumber) || 1
+
+  const keyword = req.query.keyword
+    ? {
+        name: {
+          $regex: req.query.keyword,
+          $options: 'i',
+        },
+      }
+    : {}
+
+  const count = await Product.countDocuments({ ...keyword })
+  const products = await Product.find({ ...keyword })
+    .limit(pageSize)
+    .skip(pageSize * (page - 1))
+
+  res.json({ products, page, pages: Math.ceil(count / pageSize) })
 })
 
-// @desc    Fetch a product
+// @desc    Fetch single product
 // @route   GET /api/products/:id
 // @access  Public
 const getProductById = asyncHandler(async (req, res) => {
-  const product = await Product.findById(req.params.id)
+  // NOTE: checking for valid ObjectId to prevent CastError moved to separate
+  // middleware. See README for more info.
 
+  const product = await Product.findById(req.params.id)
   if (product) {
-    res.json(product)
+    return res.json(product)
   } else {
+    // NOTE: this will run if a valid ObjectId but no product was found
+    // i.e. product may be null
     res.status(404)
-    throw new Error('Resource not found')
+    throw new Error('Product not found')
   }
 })
 
@@ -30,7 +50,7 @@ const createProduct = asyncHandler(async (req, res) => {
   const product = new Product({
     name: 'Sample name',
     price: 0,
-    user: req.user.id,
+    user: req.user._id,
     image: '/images/sample.jpg',
     brand: 'Sample brand',
     category: 'Sample category',
@@ -39,7 +59,7 @@ const createProduct = asyncHandler(async (req, res) => {
     description: 'Sample description',
   })
 
-  const createdProduct = product.save()
+  const createdProduct = await product.save()
   res.status(201).json(createdProduct)
 })
 
@@ -77,14 +97,14 @@ const deleteProduct = asyncHandler(async (req, res) => {
 
   if (product) {
     await Product.deleteOne({ _id: product._id })
-    res.status(200).json({ message: 'Product deleted' })
+    res.json({ message: 'Product removed' })
   } else {
     res.status(404)
     throw new Error('Product not found')
   }
 })
 
-// @desc    Create a new review
+// @desc    Create new review
 // @route   POST /api/products/:id/reviews
 // @access  Private
 const createProductReview = asyncHandler(async (req, res) => {
@@ -94,7 +114,7 @@ const createProductReview = asyncHandler(async (req, res) => {
 
   if (product) {
     const alreadyReviewed = product.reviews.find(
-      review => review.user.toString() === req.user._id.toString()
+      r => r.user.toString() === req.user._id.toString()
     )
 
     if (alreadyReviewed) {
@@ -109,12 +129,13 @@ const createProductReview = asyncHandler(async (req, res) => {
       user: req.user._id,
     }
 
-    product.review.push(review)
+    product.reviews.push(review)
 
     product.numReviews = product.reviews.length
 
     product.rating =
-      product.reviews.reduce((acc, r) => acc + r, 0) / product.reviews.length
+      product.reviews.reduce((acc, item) => item.rating + acc, 0) /
+      product.reviews.length
 
     await product.save()
     res.status(201).json({ message: 'Review added' })
@@ -124,6 +145,15 @@ const createProductReview = asyncHandler(async (req, res) => {
   }
 })
 
+// @desc    Get top rated products
+// @route   GET /api/products/top
+// @access  Public
+const getTopProducts = asyncHandler(async (req, res) => {
+  const products = await Product.find({}).sort({ rating: -1 }).limit(3)
+
+  res.json(products)
+})
+
 export {
   getProducts,
   getProductById,
@@ -131,4 +161,5 @@ export {
   updateProduct,
   deleteProduct,
   createProductReview,
+  getTopProducts,
 }
